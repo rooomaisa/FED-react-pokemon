@@ -8,25 +8,38 @@ function Pokemon ( {endpoint}) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
+    useEffect(() => {
+        const controller = new AbortController();
+
 
     async function fetchPokemonData() {
         setLoading(true);
         setError('')
 
         try {
-            const response = await axios.get(endpoint)
+            const response = await axios.get(endpoint, {signal: controller.signal,});
             setPokemon(response.data);
         } catch (e) {
-            console.log(e)
-            setError(`Something went wrong:` + e.message);
+            if (axios.isCancel(e)){
+                console.error(`request is canceled...`)
+            } else {
+                console.error(e);
+                setError(true);
+            }
         } finally {
             setLoading(false);
         }
 
     }
 
-    useEffect(() => {
-        fetchPokemonData();
+        if (endpoint) {
+            fetchPokemonData();
+        }
+
+    return () => {
+            console.log (`unmount effect is triggered`);
+            controller.abort();
+    }
     }, [endpoint]);
 
     if (loading) return <p>Loading...</p>;
